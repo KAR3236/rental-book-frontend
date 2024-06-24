@@ -1,113 +1,144 @@
-import Image from "next/image";
+"use client";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Grid,
+  Paper,
+  TextField,
+} from "@mui/material";
+import { toast } from "react-toastify";
+import { useFormik } from "formik";
+import { useRouter } from "next/navigation";
+import { Form } from "./Components/Form";
+import { loginValidation } from "./Validations/userValidation";
+import { useDispatch, useSelector } from "react-redux";
+import Cookies from "js-cookie";
+import { hideLoader, showLoader } from "./Redux/Slice/loaderSlice";
+import { loginAPI } from "./APIs/bookAPIs";
+import { constant } from "./Utils/constants";
 
 export default function Home() {
+  const navigate = useRouter();
+
+  //Redux
+  const dispatch = useDispatch();
+  const { loader } = useSelector((state: any) => state?.loader);
+
+  // Formik for validation and handle event by user
+  const formik = useFormik({
+    initialValues: {
+      email: "",
+      password: "",
+    },
+    validationSchema: loginValidation,
+    onSubmit: (values) => {
+      dispatch(showLoader());
+      loginAPI(values)
+        .then((loginData: any) => {
+          if (loginData?.data?.statusCode === 200) {
+            Cookies.set("loginToken", loginData?.data?.data?.token, {
+              expires: 1,
+              path: "/",
+            });
+            toast.success(loginData?.data?.message);
+            navigate.push("/dashboard");
+          } else {
+            toast.error(loginData?.data?.message);
+          }
+        })
+        .catch((error: any) => {
+          if (error.response?.data?.statusCode === 400) {
+            toast.error(error?.response?.data?.message[0]);
+          } else {
+            toast.error(error?.response?.data?.message);
+          }
+        })
+        .finally(() => {
+          dispatch(hideLoader());
+        });
+    },
+  });
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "90vh",
+      }}
+    >
+      <Paper
+        sx={{
+          p: 2,
+          margin: "auto",
+          maxWidth: 500,
+          flexGrow: 1,
+        }}
+      >
+        <Grid container justifyContent="center" alignItems="center">
+          <Form onSubmit={formik.handleSubmit}>
+            <Grid item xs={12}>
+              <h4 style={{ padding: 20, textAlign: "center", fontSize: 25 }}>
+                {constant.LOGIN}
+              </h4>
+            </Grid>
 
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+            <Grid item xs={12}>
+              <TextField
+                id={constant.EMAIL}
+                label={constant.EMAIL}
+                name={constant.EMAIL.toLowerCase()}
+                type={constant.EMAIL.toLowerCase()}
+                placeholder="name@example.com"
+                style={{ padding: 10 }}
+                value={formik?.values?.email}
+                onBlur={formik.handleBlur}
+                onChange={formik.handleChange}
+              />
+              {formik?.touched?.email && formik?.errors?.email ? (
+                <div
+                  style={{ color: "red", paddingLeft: 10, paddingBottom: 10 }}
+                >
+                  {formik?.errors?.email}
+                </div>
+              ) : null}
+            </Grid>
 
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+            <Grid item xs={12}>
+              <TextField
+                id={constant.PASSWORD}
+                label={constant.PASSWORD}
+                name={constant.PASSWORD.toLowerCase()}
+                type={constant.PASSWORD.toLowerCase()}
+                placeholder="Enter password"
+                style={{ padding: 10, paddingBottom: "0" }}
+                value={formik?.values?.password}
+                onBlur={formik.handleBlur}
+                onChange={formik.handleChange}
+              />
+              {formik?.touched?.password && formik?.errors?.password ? (
+                <div
+                  style={{ color: "red", paddingLeft: 10, paddingBottom: 10 }}
+                >
+                  {formik?.errors?.password}
+                </div>
+              ) : null}
+            </Grid>
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+            <Grid item xs={12} style={{ textAlign: "center", padding: 18 }}>
+              <Button
+                type="submit"
+                variant="contained"
+                style={{ color: "black", backgroundColor: "white" }}
+              >
+                {loader ? <CircularProgress size={25} /> : constant.LOGIN}
+              </Button>
+            </Grid>
+          </Form>
+        </Grid>
+      </Paper>
+    </Box>
   );
 }
