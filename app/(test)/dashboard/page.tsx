@@ -82,7 +82,7 @@ export default function Dashboard() {
                 <Card sx={{ maxWidth: 400 }}>
                   <CardMedia
                     sx={{ height: 140 }}
-                    image="/static/images/cards/contemplative-reptile.jpg"
+                    image={`http://localhost:2000/${data.book_image}`}
                     title="green iguana"
                   />
                   <CardContent>
@@ -99,10 +99,6 @@ export default function Dashboard() {
                       {data.rent}
                     </Typography>
                   </CardContent>
-                  {/* <CardActions>
-                      <Button size="small">Share</Button>
-                      <Button size="small">Learn More</Button>
-                    </CardActions> */}
                 </Card>
               </Grid>
             );
